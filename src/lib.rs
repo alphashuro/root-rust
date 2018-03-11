@@ -1,28 +1,26 @@
 extern crate reqwest;
-
-use reqwest::{Method};
 #[macro_use] extern crate serde_derive;
 
-struct RootClient {
+pub struct RootClient {
     client: reqwest::Client,
     api_key: &'static str,
     pub env: RootEnv
 }
 
-enum RootEnv {
+pub enum RootEnv {
     Sandbox,
     Production
 }
 
-#[derive(Deserialize)]
-struct GadgetModel {
+#[derive(Debug, Deserialize)]
+pub struct GadgetModel {
     make: String,
     name: String,
     value: i32
 }
 
 impl RootClient {
-    fn new(api_key: &'static str, env: RootEnv) -> Self {
+    pub fn new(api_key: &'static str, env: RootEnv) -> Self {
         RootClient { 
             api_key,
             env,
@@ -39,10 +37,11 @@ impl RootClient {
         format!("https://{}.root.co.za/v1/{}", env, path)
     }
 
-    fn gadget_models(&self) -> reqwest::Result<Vec<GadgetModel>> {
+    pub fn get_gadget_models(&self) -> reqwest::Result<Vec<GadgetModel>> {
         let url = self.url("insurance/modules/root_gadgets/models");
 
         let models: Vec<GadgetModel> = self.client.get(&url)
+            .basic_auth::<&str, &str>(self.api_key, None)
             .send()?
             .json()?;
 
