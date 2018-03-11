@@ -1,5 +1,7 @@
 extern crate reqwest;
 #[macro_use] extern crate serde_derive;
+extern crate serde;
+#[macro_use] extern crate serde_json;
 
 pub struct RootClient {
     client: reqwest::Client,
@@ -19,6 +21,26 @@ pub struct GadgetModel {
     value: i32
 }
 
+#[derive(Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum Module {
+    #[serde(rename = "root_gadgets")]
+    Gadgets { make: String, model: String }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Quote {
+    quote_package_id: String,
+    package_name: String,
+    sum_assured: i32,
+    base_premium: i32,
+    suggested_premium: i32,
+    module: Module,
+    created_at: String
+}
+
+type RootResult<T> = reqwest::Result<T>;
+
 impl RootClient {
     pub fn new(api_key: &'static str, env: RootEnv) -> Self {
         RootClient { 
@@ -37,17 +59,33 @@ impl RootClient {
         format!("https://{}.root.co.za/v1/{}", env, path)
     }
 
-    pub fn get_gadget_models(&self) -> reqwest::Result<Vec<GadgetModel>> {
+    pub fn gadget_models(&self) -> RootResult<Vec<GadgetModel>> {
         let url = self.url("insurance/modules/root_gadgets/models");
 
-        let models: Vec<GadgetModel> = self.client.get(&url)
+        let models: Vec<GadgetModel> = self.client.request(reqwest::Method::Get, &url)
             .basic_auth::<&str, &str>(self.api_key, None)
             .send()?
             .json()?;
 
         Ok(models)  
     }
+
+    pub fn gadget_quotes(&self, model: &str) -> RootResult<Vec<Quote>> {
+        let url = self.url("insurance/quotes");
+
+        let quotes: Vec<Quote> = self.client.request(reqwest::Method::Post, &url)
+            .basic_auth::<&str, &str>(self.api_key, None)
+            .json(&json!({
+                "type": "root_gadgets",
+                "model_name": model
+            }))
+            .send()?
+            .json()?;
+
+        Ok(quotes)
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
