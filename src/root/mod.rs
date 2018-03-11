@@ -2,14 +2,14 @@ extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 
+use root::insurance::Insurance;
+
 pub mod insurance;
 
 type Json = serde_json::Value;
 
 pub struct RootClient {
-    client: reqwest::Client,
-    api_key: &'static str,
-    pub env: RootEnv
+    insurance: Insurance
 }
 
 pub enum RootEnv {
@@ -22,17 +22,29 @@ pub enum Request {
     Post(&'static str, Json)
 }
 
+pub struct RootApi {
+    client: reqwest::Client,
+    api_key: &'static str,
+    pub env: RootEnv
+}
+
 pub type RootResult<T> = reqwest::Result<T>;
 
 impl RootClient {
     pub fn new(api_key: &'static str, env: RootEnv) -> Self {
-        RootClient { 
-            api_key,
-            env,
-            client: reqwest::Client::new()
+        RootClient {
+            insurance: Insurance {
+                api: RootApi {
+                    api_key,
+                    env,
+                    client: reqwest::Client::new(),
+                }
+            }
         }
     }
+}
 
+impl RootApi {
     fn url(&self, path: &str) -> String {
         let env = match self.env {
             RootEnv::Sandbox => "sandbox",

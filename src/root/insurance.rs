@@ -1,7 +1,11 @@
 extern crate reqwest;
 extern crate serde;
 
-use root::{RootClient, RootResult, Request};
+use root::{RootApi, RootResult, Request};
+
+pub struct Insurance<'a> {
+    pub(in root) api: &'a RootApi
+}
 
 #[derive(Debug, Deserialize)]
 pub struct GadgetModel {
@@ -28,15 +32,19 @@ pub struct Quote {
     created_at: String
 }
 
-impl RootClient {
+impl Insurance {
+    // pub fn new(root &RootApi) {
+
+    // }
+
     pub fn gadget_models(&self) -> RootResult<Vec<GadgetModel>> {
-        self.request(
+        self.api.request(
             Request::Get("insurance/modules/root_gadgets/models")
         )
     }
 
     pub fn gadget_quotes(&self, model: &str) -> RootResult<Vec<Quote>> {
-        self.request(
+        self.api.request(
             Request::Post("insurance/quotes", json!({
                 "type": "root_gadgets",
                 "model_name": model
