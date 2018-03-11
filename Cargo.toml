@@ -1,0 +1,9 @@
+[package]
+name = "root"
+version = "0.1.0"
+authors = ["Alpha Shuro <alphashuro@gmail.com>"]
+
+[dependencies]
+reqwest = "0.8.5"
+serde = "1.0"
+serde_derive = "1.0"
